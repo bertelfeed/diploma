@@ -1,0 +1,210 @@
+/* Общие настройки */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+}
+
+/* Боковая панель */
+.sidebar {
+    width: 260px;
+    background-color: #ffffff;
+    border-right: 1px solid #dee2e6;
+    min-height: 100vh;
+    font-size: 14px;
+}
+
+.sidebar h4 {
+    font-weight: bold;
+}
+
+.sidebar input[type="checkbox"],
+.sidebar input[type="radio"] {
+    margin-right: 6px;
+}
+
+.sidebar ul {
+    padding-left: 0;
+    list-style: none;
+}
+
+.sidebar li {
+    margin-bottom: 5px;
+}
+
+/* Заголовки и кнопки */
+h2, h4, h5 {
+    font-weight: 600;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+
+.calendar-wrapper {
+  position: relative;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 100px;
+  position: relative;
+}
+
+.calendar-header {
+  font-weight: bold;
+  padding: 8px;
+  background-color: #f8f9fa;
+  text-align: center;
+}
+
+.calendar-cell {
+  padding: 4px;
+  border: 1px solid #dee2e6;
+  position: relative;
+}
+
+.calendar-cell:hover {
+    background-color: #f8f9fa;
+}
+
+.calendar-cell:last-child {
+    border-right: none;
+}
+
+.calendar-cell.dimmed {
+    background-color: #f1f3f5;
+    color: #adb5bd;
+}
+
+/* Число дня */
+.date-number {
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+/* События */
+.event-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.event-item {
+    border-left: 3px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.event-item:hover {
+    filter: brightness(0.95);
+}
+
+.event-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+    background-color: #0d6efd;
+}
+
+/* Кнопки и иконки */
+.btn-link {
+    text-decoration: none;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+.modal-title {
+    font-weight: bold;
+}
+
+.calendar-cell.today {
+    border: 2px solid #0d6efd;
+    background-color: #eaf4ff;
+    position: relative;
+}
+
+.calendar-cell.today::after {
+    content: "Сегодня";
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 10px;
+    color: #0d6efd;
+    background: #ffffff;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.event-blocks {
+    position: relative;
+    margin-top: 4px;
+}
+
+.event-line {
+    display: block;
+    height: 20px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.event-line-start {
+    padding-left: 6px;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.multiday-line {
+  grid-row: auto;
+  grid-column: auto;
+  background-color: #0d6efd;
+  color: #fff;
+  font-size: 13px;
+  padding: 2px 6px;
+  margin: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 5;
+}
+
+.multiday-line-inside {
+  height: 20px;
+  color: white;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+}
