@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Kanban-доска</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="d-flex">
+    <!-- Левое меню -->
+    <aside class="sidebar p-3">
+        <h4 class="mb-4"><span style="color: #0d6efd;">Find</span><strong>Time</strong></h4>
+
+        <div class="mb-3">
+            <a href="/" class="btn btn-outline-primary w-100 mb-2">
+                <i class="bi bi-calendar3"></i> Календарь
+            </a>
+            <a href="/kanban" class="btn btn-primary w-100">
+                <i class="bi bi-columns-gap"></i> Kanban
+            </a>
+        </div>
+
+        <h6 class="text-muted mt-4">📅 Календари</h6>
+        <form method="get" id="calendarFilterForm" class="mb-3">
+            <ul class="list-unstyled small">
+                {% for cid, cname in calendars.items() %}
+                <li class="d-flex justify-content-between align-items-center">
+                    <label class="d-flex align-items-center gap-1">
+                        <input type="checkbox" name="calendar"
+                               value="{{ cid }}"
+                               onchange="document.getElementById('calendarFilterForm').submit();"
+                               {% if cid in selected_calendars %}checked{% endif %}>
+                        {{ cname }}
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+        </form>
+    </aside>
+
+    <!-- Kanban контент -->
+    <main class="flex-grow-1 p-4">
+        <h3 class="mb-4">Kanban-доска</h3>
+        <div class="kanban-board d-flex gap-4">
+            {% for status in ['todo', 'in_progress', 'done'] %}
+            <div class="kanban-column border p-3 bg-light" style="width: 33%;">
+                <h5 class="text-capitalize">{{ status.replace('_', ' ') }}</h5>
+                {% for task in tasks if task.status == status %}
+                    <div class="p-2 mb-2 bg-white border rounded shadow-sm"
+                         style="border-left: 4px solid {{ calendar_colors.get(task.calendar_id, '#0d6efd') }}">
+                        <strong>{{ task.title }}</strong><br>
+                        <small class="text-muted">{{ task.date }}</small>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

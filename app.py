@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import calendar
 from uuid import uuid4
 from slugify import slugify
+from collections import defaultdict
+
 
 app = Flask(__name__)
 
@@ -39,6 +41,7 @@ def get_month_days(year, month):
     cal = calendar.Calendar()
     return list(cal.itermonthdates(year, month))
 
+
 @app.route('/')
 def index():
     year = request.args.get('year', type=int)
@@ -57,6 +60,7 @@ def index():
     days = get_month_days(year, month)
     month_name = calendar.month_name[month].capitalize()
 
+    # Подготовка словаря событий на каждый день
     events = {d.strftime('%Y-%m-%d'): [] for d in days}
 
     for cal_id in selected_calendars:
@@ -75,7 +79,7 @@ def index():
                 event_copy = event.copy()
                 event_copy['calendar_id'] = cal_id
 
-                # добавляем многодневные события
+                # Многодневные события: добавим в каждый день диапазона
                 delta_days = (end_dt.date() - start_dt.date()).days
                 for i in range(delta_days + 1):
                     day = start_dt.date() + timedelta(days=i)
@@ -85,7 +89,7 @@ def index():
                         repeated['calendar_id'] = cal_id
                         events[day_key].append(repeated)
 
-                # Повторяющиеся события (однодневные, многодневные не повторяем для простоты)
+                # Повторяющиеся события (однодневные)
                 if repeat != 'none':
                     for d in days:
                         d_key = d.strftime('%Y-%m-%d')
@@ -95,22 +99,21 @@ def index():
                         add_event = False
                         if repeat == 'daily' and d >= start_dt.date():
                             add_event = True
-                        elif repeat == 'weekly' and d >= start_dt.date():
-                            if d.weekday() == start_dt.weekday():
-                                add_event = True
-                        elif repeat == 'monthly' and d >= start_dt.date():
-                            if d.day == start_dt.day:
-                                add_event = True
-                        elif repeat == 'yearly' and d >= start_dt.date():
-                            if d.day == start_dt.day and d.month == start_dt.month:
-                                add_event = True
+                        elif repeat == 'weekly' and d >= start_dt.date() and d.weekday() == start_dt.weekday():
+                            add_event = True
+                        elif repeat == 'monthly' and d >= start_dt.date() and d.day == start_dt.day:
+                            add_event = True
+                        elif repeat == 'yearly' and d >= start_dt.date() and d.day == start_dt.day and d.month == start_dt.month:
+                            add_event = True
 
                         if add_event and d_key in events:
                             repeated = event.copy()
                             repeated['calendar_id'] = cal_id
                             events[d_key].append(repeated)
 
+    # Многодневные события с координатами
     multiday_events = []
+    multiday_day_levels = defaultdict(int)
 
     for cal_id in selected_calendars:
         cal_events = EVENTS.get(cal_id, {})
@@ -125,27 +128,28 @@ def index():
                     try:
                         day_index = days.index(start_dt.date())
                     except ValueError:
-                        continue  # дата не в пределах видимой сетки
+                        continue  # дата вне видимой сетки
 
                     grid_column = (day_index % 7) + 1
-                    grid_row = (day_index // 7) + 2
+                    grid_row = (day_index // 7) + 2  # +1 за заголовки, +1 за base-индексацию
 
-                    print("INDEX:", day_index, "→ grid_row:", grid_row)
-
-                    # длина полосы
+                    # сколько дней занимает
                     span = sum(1 for d in days if start_dt.date() <= d <= end_dt.date())
+
+                    # уровень — чтобы не перекрывать друг друга
+                    level = multiday_day_levels[start_dt.date()]
+                    multiday_day_levels[start_dt.date()] += 1
 
                     multiday_events.append({
                         'title': e['title'],
                         'calendar_id': cal_id,
-                        'start': e['start'],  # 👈 обязательно добавляем
+                        'start': e['start'],
                         'end': e['end'],
                         'grid_start': grid_column,
                         'grid_row': grid_row,
-                        'span': span
+                        'span': span,
+                        'level': level
                     })
-
-    print("MULTIDAY:", multiday_events)
 
     return render_template('index.html',
                            days=days,
@@ -160,6 +164,7 @@ def index():
                            calendar_colors=CALENDAR_COLORS,
                            multiday_events=multiday_events,
                            datetime=datetime)
+
 
 
 @app.route('/add', methods=['POST'])
@@ -185,7 +190,9 @@ def add_event():
         'description': description,
         'reminder': reminder,
         'url': url,
-        'repeat': repeat
+        'repeat': repeat,
+        'type': 'task',  # 👈 новое поле
+        'status': 'todo'  # 👈 новое поле для Kanban
     }
 
     EVENTS.setdefault(calendar_id, {}).setdefault(start_date, []).append(event)
@@ -217,15 +224,20 @@ def delete_event():
 def edit_event():
     date = request.form.get('event_date')
     index = int(request.form.get('event_index'))
-    title = request.form.get('title')
-    time = request.form.get('time')
     calendar_id = request.form.get('calendar', 'work')
 
-    if (calendar_id in EVENTS and
-            date in EVENTS[calendar_id] and
-            0 <= index < len(EVENTS[calendar_id][date])):
-        EVENTS[calendar_id][date][index]['title'] = title
-        EVENTS[calendar_id][date][index]['time'] = time
+    if calendar_id in EVENTS and date in EVENTS[calendar_id] and 0 <= index < len(EVENTS[calendar_id][date]):
+        event = EVENTS[calendar_id][date][index]
+
+        # Обновляем поля
+        event['title'] = request.form.get('title')
+        event['description'] = request.form.get('description', '')
+
+        start = request.form.get('start_datetime')
+        end = request.form.get('end_datetime')
+
+        if start: event['start'] = start
+        if end: event['end'] = end
 
     dt = datetime.strptime(date, '%Y-%m-%d')
     return redirect(url_for('index', year=dt.year, month=dt.month, calendar=calendar_id))
@@ -285,7 +297,7 @@ def create_calendar():
     if not name:
         return redirect(url_for('index'))
 
-    calendar_id = slugify(name.lower(), separator="_")
+    calendar_id = slugify(name.lower()).replace('-', '_')
     if calendar_id in CALENDARS:
         # имя уже существует — просто выбираем его
         pass
@@ -316,6 +328,23 @@ def edit_calendar():
 
     return redirect(url_for('index', year=year, month=month, calendar=selected_calendars))
 
+@app.route('/kanban')
+def kanban_view():
+    selected_calendars = request.args.getlist('calendar') or list(EVENTS.keys())
+    tasks = []
+
+    for cal_id in selected_calendars:
+        for date, evlist in EVENTS.get(cal_id, {}).items():
+            for e in evlist:
+                if e.get('type') == 'task':
+                    e_copy = e.copy()
+                    e_copy['calendar_id'] = cal_id
+                    e_copy['date'] = date
+                    tasks.append(e_copy)
+
+    return render_template('kanban.html', tasks=tasks, calendars=CALENDARS,
+                           selected_calendars=selected_calendars,
+                           calendar_colors=CALENDAR_COLORS)
 
 if __name__ == '__main__':
     app.run(debug=True)
