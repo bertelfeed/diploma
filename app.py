@@ -4,6 +4,7 @@ import calendar
 from uuid import uuid4
 from slugify import slugify
 from collections import defaultdict
+from math import floor
 
 
 app = Flask(__name__)
@@ -125,31 +126,38 @@ def index():
                     if (end_dt.date() - start_dt.date()).days < 1:
                         continue
 
-                    try:
-                        day_index = days.index(start_dt.date())
-                    except ValueError:
-                        continue  # дата вне видимой сетки
+                    # только дни, попавшие в отображаемый месяц
+                    span_days = [d for d in days if start_dt.date() <= d <= end_dt.date()]
+                    if not span_days:
+                        continue
 
-                    grid_column = (day_index % 7) + 1
-                    grid_row = (day_index // 7) + 2  # +1 за заголовки, +1 за base-индексацию
+                    # разбиваем на недели
+                    week_spans = defaultdict(list)
+                    for d in span_days:
+                        week = floor(days.index(d) / 7)
+                        week_spans[week].append(d)
 
-                    # сколько дней занимает
-                    span = sum(1 for d in days if start_dt.date() <= d <= end_dt.date())
+                    for week_index, week_days in week_spans.items():
+                        first_day = week_days[0]
+                        last_day = week_days[-1]
 
-                    # уровень — чтобы не перекрывать друг друга
-                    level = multiday_day_levels[start_dt.date()]
-                    multiday_day_levels[start_dt.date()] += 1
+                        grid_column = (first_day.weekday() + 1) if first_day.weekday() < 6 else 7
+                        span = len(week_days)
+                        grid_row = week_index + 2  # +1 за заголовки, +1 для base-индексации
 
-                    multiday_events.append({
-                        'title': e['title'],
-                        'calendar_id': cal_id,
-                        'start': e['start'],
-                        'end': e['end'],
-                        'grid_start': grid_column,
-                        'grid_row': grid_row,
-                        'span': span,
-                        'level': level
-                    })
+                        level = multiday_day_levels[first_day]
+                        multiday_day_levels[first_day] += 1
+
+                        multiday_events.append({
+                            'title': e['title'],
+                            'calendar_id': cal_id,
+                            'start': e['start'],
+                            'end': e['end'],
+                            'grid_start': grid_column,
+                            'grid_row': grid_row,
+                            'span': span,
+                            'level': level
+                        })
 
     return render_template('index.html',
                            days=days,
@@ -201,46 +209,59 @@ def add_event():
     return redirect(url_for('index', year=dt.year, month=dt.month, calendar=calendar_id))
 
 
-
 @app.route('/delete', methods=['POST'])
 def delete_event():
-    date = request.form.get('event_date')
-    index = int(request.form.get('event_index'))
+    uid = request.form.get('event_uid')
     calendar_id = request.form.get('calendar', 'work')
 
-    if (calendar_id in EVENTS and
-            date in EVENTS[calendar_id] and
-            0 <= index < len(EVENTS[calendar_id][date])):
+    found = False
+    for date, evlist in EVENTS.get(calendar_id, {}).items():
+        for idx, event in enumerate(evlist):
+            if event.get('uid') == uid:
+                evlist.pop(idx)
+                if not evlist:
+                    del EVENTS[calendar_id][date]
+                found = True
+                dt = datetime.strptime(date, '%Y-%m-%d')
+                break
+        if found:
+            break
 
-        EVENTS[calendar_id][date].pop(index)
-        # Удаляем ключ даты, если больше нет событий
-        if not EVENTS[calendar_id][date]:
-            del EVENTS[calendar_id][date]
+    if not found:
+        dt = datetime.today()
 
-    dt = datetime.strptime(date, '%Y-%m-%d')
     return redirect(url_for('index', year=dt.year, month=dt.month, calendar=calendar_id))
+
 
 @app.route('/edit', methods=['POST'])
 def edit_event():
-    date = request.form.get('event_date')
-    index = int(request.form.get('event_index'))
+    uid = request.form.get('event_uid')
     calendar_id = request.form.get('calendar', 'work')
 
-    if calendar_id in EVENTS and date in EVENTS[calendar_id] and 0 <= index < len(EVENTS[calendar_id][date]):
-        event = EVENTS[calendar_id][date][index]
+    # Поиск события по uid
+    found = False
+    for date, evlist in EVENTS.get(calendar_id, {}).items():
+        for idx, event in enumerate(evlist):
+            if event.get('uid') == uid:
+                # Обновление полей
+                event['title'] = request.form.get('title')
+                event['description'] = request.form.get('description', '')
+                start = request.form.get('start_datetime')
+                end = request.form.get('end_datetime')
+                if start: event['start'] = start
+                if end: event['end'] = end
 
-        # Обновляем поля
-        event['title'] = request.form.get('title')
-        event['description'] = request.form.get('description', '')
+                found = True
+                dt = datetime.strptime(date, '%Y-%m-%d')
+                break
+        if found:
+            break
 
-        start = request.form.get('start_datetime')
-        end = request.form.get('end_datetime')
+    if not found:
+        dt = datetime.today()
 
-        if start: event['start'] = start
-        if end: event['end'] = end
-
-    dt = datetime.strptime(date, '%Y-%m-%d')
     return redirect(url_for('index', year=dt.year, month=dt.month, calendar=calendar_id))
+
 
 def generate_ics(events):
     lines = [
@@ -345,6 +366,44 @@ def kanban_view():
     return render_template('kanban.html', tasks=tasks, calendars=CALENDARS,
                            selected_calendars=selected_calendars,
                            calendar_colors=CALENDAR_COLORS)
+
+@app.route('/gantt')
+def gantt_view():
+    selected_calendars = request.args.getlist('calendar') or list(EVENTS.keys())
+    gantt_events = []
+
+    for cal_id in selected_calendars:
+        for date, evlist in EVENTS.get(cal_id, {}).items():
+            for e in evlist:
+                start_str = e.get('start') or f"{date}T{e.get('time', '00:00')}"
+                end_str = e.get('end') or start_str
+
+                start_dt = datetime.strptime(start_str, "%Y-%m-%dT%H:%M")
+                end_dt = datetime.strptime(end_str, "%Y-%m-%dT%H:%M")
+
+                gantt_events.append({
+                    'uid': e.get('uid'),
+                    'title': e['title'],
+                    'start': start_dt,
+                    'end': end_dt,
+                    'calendar_id': cal_id
+                })
+
+    # Определим минимальную дату для выравнивания
+    if gantt_events:
+        min_start = min(ev['start'] for ev in gantt_events)
+    else:
+        min_start = datetime.today()
+
+    return render_template('gantt.html',
+                           events=gantt_events,
+                           calendars=CALENDARS,
+                           selected_calendars=selected_calendars,
+                           calendar_colors=CALENDAR_COLORS,
+                           min_start=min_start)
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

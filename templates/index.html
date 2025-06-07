@@ -50,7 +50,7 @@
         <ul class="list-unstyled small">
             <li><a href="{{ url_for('index') }}">Календарь</a></li>
             <li>Матрица Эйзенхауэра</li>
-            <li>Диаграмма Ганта</li>
+            <li><a href="{{ url_for('gantt_view') }}">Диаграмма Ганта</a></li>
             <li><a href="/kanban">Доска «Kanban»</a></li>
         </ul>
 
@@ -107,12 +107,10 @@
                     {% set top = (event.grid_row - 1) * 100 + 26 + (event.level * 24) %}
                     {% set left = (event.grid_start - 1) * (100 / 7) %}
                     {% set width = event.span * (100 / 7) %}
-                    <div class="multiday-line"
-                         style="
-                           top: {{ top }}px;
-                           left: {{ left }}%;
-                           width: {{ width }}%;
-                           background-color: {{ calendar_colors.get(event.calendar_id, '#0d6efd') }}">
+                   <div class="multiday-line"
+                         style="top: {{ top }}px; left: {{ left }}%; width: {{ width }}%;
+                                background-color: {{ calendar_colors.get(event.calendar_id, '#0d6efd') }};"
+                         onclick='triggerEditModalFromCalendar("{{ event.start.split("T")[0] }}", 0, {{ event | tojson | safe }})'>
                         {{ event.start.split('T')[1][:5] }}–{{ event.end.split('T')[1][:5] }} {{ event.title }}
                     </div>
                 {% endfor %}
@@ -125,7 +123,8 @@
                         ondblclick="openModal(this)">
                         <div class="date-number">{{ day.day }}</div>
                         <div class="event-blocks">
-                            {% for event in events[day.strftime('%Y-%m-%d')] %}
+                            {% set events_today = events[day.strftime('%Y-%m-%d')] %}
+                            {% for event in events_today[:3] %}
                                 {% set start = event.start.split('T')[0] if event.start else '' %}
                                 {% set end = event.end.split('T')[0] if event.end else '' %}
                                 {% if start == end %}
@@ -143,19 +142,16 @@
                                 {% endif %}
                             {% endfor %}
 
-<!--                            {% for event in multiday_events %}-->
-<!--                                {% set start_date = event['start'].split('T')[0] %}-->
-<!--                                {% if start_date == day.strftime('%Y-%m-%d') %}-->
-<!--                                    {% set start_time = event.start.split('T')[1][:5] %}-->
-<!--                                    {% set end_time = event.end.split('T')[1][:5] %}-->
-<!--                                    <div class="multiday-line-inside"-->
-<!--                                         style="width: calc({{ event.span }} * 100% / 7);-->
-<!--                                                background-color: {{ calendar_colors.get(event.calendar_id, '#0d6efd') }}">-->
-<!--                                        {{ start_time }}–{{ end_time }} {{ event.title }}-->
-<!--                                    </div>-->
-<!--                                {% endif %}-->
-<!--                            {% endfor %}-->
+                            {% if events_today|length > 3 %}
+                                <div class="text-center">
+                                    <button class="btn btn-sm btn-link text-primary p-0"
+                                            onclick='openDaySidebar("{{ day.strftime("%Y-%m-%d") }}")'>
+                                        Показать все ({{ events_today|length }})
+                                    </button>
+                                </div>
+                            {% endif %}
                         </div>
+
                     </div>
                 {% endfor %}
 
@@ -252,6 +248,8 @@
         <input type="hidden" name="event_date" id="editDateInput">
         <input type="hidden" name="event_index" id="editIndexInput">
         <input type="hidden" name="calendar" id="editCalendarInput">
+        <input type="hidden" name="event_uid" id="editUidInput">
+
 
         <div class="mb-3">
           <label class="form-label">Название</label>
@@ -291,6 +289,8 @@
       <input type="hidden" name="event_date" id="deleteDateInput">
       <input type="hidden" name="event_index" id="deleteIndexInput">
       <input type="hidden" name="calendar" value="{{ active_calendar }}">
+      <input type="hidden" name="event_uid" id="deleteUidInput">
+
       <div class="modal-footer">
         <button type="submit" class="btn btn-danger">Удалить</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -353,6 +353,14 @@
   </div>
 </div>
 
+<div id="daySidebar" class="day-sidebar bg-white border-start shadow position-fixed top-0 end-0 h-100 p-3" style="width: 320px; display: none; z-index: 1050;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="m-0">События на <span id="daySidebarDate"></span></h5>
+        <button class="btn-close" onclick="closeDaySidebar()"></button>
+    </div>
+    <div id="daySidebarEvents" class="small"></div>
+</div>
+
 
 
 <!-- JS -->
@@ -375,18 +383,14 @@
         new bootstrap.Modal(document.getElementById('eventModal')).show();
     }
 
-    function triggerEditModalFromCalendar(date, index, event) {
+   function triggerEditModalFromCalendar(date, index, event) {
         document.getElementById('editDateInput').value = date;
         document.getElementById('editIndexInput').value = index;
+        document.getElementById('editUidInput').value = event.uid || '';
         document.getElementById('editCalendarInput').value = event.calendar_id;
         document.getElementById('editTitleInput').value = event.title || '';
-
-        if (event.start) {
-            document.getElementById('editStartInput').value = event.start;
-        }
-        if (event.end) {
-            document.getElementById('editEndInput').value = event.end;
-        }
+        document.getElementById('editStartInput').value = event.start || '';
+        document.getElementById('editEndInput').value = event.end || '';
         document.getElementById('editDescriptionInput').value = event.description || '';
 
         new bootstrap.Modal(document.getElementById('editEventModal')).show();
@@ -405,21 +409,26 @@
         if (editModal) editModal.hide();
     }
 
-    function triggerDeleteModal(date, index) {
+    function triggerDeleteModal(date, index, uid) {
         document.getElementById('deleteDateInput').value = date;
         document.getElementById('deleteIndexInput').value = index;
+        document.getElementById('deleteUidInput').value = uid;
         new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
     }
+
 
     function triggerDeleteFromEditModal() {
         const date = document.getElementById('editDateInput').value;
         const index = document.getElementById('editIndexInput').value;
+        const uid = document.getElementById('editUidInput').value;
         closeEditModal();
-        setTimeout(() => triggerDeleteModal(date, index), 300);
+        setTimeout(() => triggerDeleteModal(date, index, uid), 300);
     }
+
     function showCreateCalendarModal() {
         new bootstrap.Modal(document.getElementById('createCalendarModal')).show();
     }
+
     function openEditCalendarModal(id, name, color) {
         document.getElementById('editCalendarId').value = id;
         document.getElementById('editCalendarName').value = name;
@@ -439,6 +448,43 @@
         });
 
         new bootstrap.Modal(document.getElementById('editCalendarModal')).show();
+    }
+
+    function openDaySidebar(date) {
+        const events = {{ events | tojson }};
+        const colors = {{ calendar_colors | tojson }};
+        const dayEvents = events[date] || [];
+
+        const container = document.getElementById('daySidebarEvents');
+        const dateLabel = document.getElementById('daySidebarDate');
+        dateLabel.innerText = new Date(date).toLocaleDateString('ru-RU');
+
+        container.innerHTML = '';
+
+        dayEvents.forEach((event, index) => {
+            const color = colors[event.calendar_id] || '#0d6efd';
+            const start = event.start ? event.start.split('T')[1].slice(0, 5) : '';
+            const end = event.end ? event.end.split('T')[1].slice(0, 5) : '';
+            const time = start ? `${start}${end ? '–' + end : ''}, ` : '';
+
+            const item = document.createElement('div');
+            item.className = 'event-item mb-2';
+            item.style.borderLeft = `3px solid ${color}`;
+            item.style.backgroundColor = color + '20';
+            item.style.cursor = 'pointer';
+            item.innerText = `${time}${event.title}`;
+            item.onclick = () => {
+                const startDate = event.start ? event.start.split("T")[0] : date;
+                triggerEditModalFromCalendar(startDate, index, event);
+            };
+            container.appendChild(item);
+        });
+
+        document.getElementById('daySidebar').style.display = 'block';
+    }
+
+    function closeDaySidebar() {
+        document.getElementById('daySidebar').style.display = 'none';
     }
 </script>
 </body>
