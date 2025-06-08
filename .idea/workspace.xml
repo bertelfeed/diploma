@@ -4,11 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf5112c1-21fd-4c22-a05e-60121a4df896" name="Changes" comment="ui v.2">
-      <change afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/routes.py" afterDir="false" />
+    <list default="true" id="cf5112c1-21fd-4c22-a05e-60121a4df896" name="Changes" comment="add routes.py and database.py, refactor code">
+      <change afterPath="$PROJECT_DIR$/app_factory.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routes/auth.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/eisenhower.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/login.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/register.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/eisenhower.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/login.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/register.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/gantt.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/gantt.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,6 +31,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTML File" />
+        <option value="CSS File" />
         <option value="Python Script" />
       </list>
     </option>
@@ -57,6 +70,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -85,7 +99,8 @@
       <workItem from="1747731564770" duration="817000" />
       <workItem from="1749309055013" duration="525000" />
       <workItem from="1749309988136" duration="3383000" />
-      <workItem from="1749319013790" duration="2233000" />
+      <workItem from="1749319013790" duration="9169000" />
+      <workItem from="1749391450192" duration="15151000" />
     </task>
     <task id="LOCAL-00001" summary="init">
       <option name="closed" value="true" />
@@ -111,7 +126,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749309577814</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="add routes.py and database.py, refactor code">
+      <option name="closed" value="true" />
+      <created>1749321845829</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1749321845829</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -132,7 +155,8 @@
     <MESSAGE value="init" />
     <MESSAGE value="ui" />
     <MESSAGE value="ui v.2" />
-    <option name="LAST_COMMIT_MESSAGE" value="ui v.2" />
+    <MESSAGE value="add routes.py and database.py, refactor code" />
+    <option name="LAST_COMMIT_MESSAGE" value="add routes.py and database.py, refactor code" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -146,7 +170,7 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/PythonProject8$app.coverage" NAME="app Coverage Results" MODIFIED="1749312782380" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/PythonProject8$main.coverage" NAME="main Coverage Results" MODIFIED="1747579863573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/PythonProject8$app.coverage" NAME="app Coverage Results" MODIFIED="1749424950642" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/PythonProject8$main.coverage" NAME="main Coverage Results" MODIFIED="1749396966606" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

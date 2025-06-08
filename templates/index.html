@@ -48,35 +48,41 @@
 
         <h6 class="text-muted mt-4">👁 Вид</h6>
         <ul class="list-unstyled small">
-            <li><a href="{{ url_for('index') }}">Календарь</a></li>
-            <li>Матрица Эйзенхауэра</li>
-            <li><a href="{{ url_for('gantt_view') }}">Диаграмма Ганта</a></li>
+            <li><a href="{{ url_for('calendar.index', month=current_date.month, year=current_date.year, calendar=selected_calendars) }}">Календарь</a></li>
+            <li><a href="{{ url_for('eisenhower.eisenhower') }}">🧭 Матрица Эйзенхауэра</a></li>
+            <li><a href="{{ url_for('calendar.gantt_view') }}">Диаграмма Ганта</a></li>
             <li><a href="/kanban">Доска «Kanban»</a></li>
         </ul>
 
         <h6 class="text-muted mt-4">🏆 Достижения</h6>
-        <ul class="list-unstyled small">
-            <li>Мероприятительный человек <br><small class="text-muted">78 / 100</small></li>
-            <li>Событийность превысше <br><small class="text-muted">320 / 1000</small></li>
-        </ul>
+        <div class="achievements-panel">
+            <ul class="achievements-list">
+                {% for achievement in achievements %}
+                <li class="{{ 'achieved' if achievement.achieved else 'not-achieved' }}">
+                    <strong>{{ achievement.title }}</strong><br>
+                    <small>{{ achievement.description }}</small>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </aside>
 
     <!-- Основной контент -->
     <main class="flex-grow-1 p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <a href="{{ url_for('index', month=current_date.month, year=current_date.year, calendar=selected_calendars) }}"
+                <a href="{{ url_for('calendar.index', month=current_date.month, year=current_date.year, calendar=selected_calendars) }}"
                    class="btn btn-outline-secondary btn-sm me-2">
                    Сегодня
                 </a>
                 <strong class="fs-4">{{ month_name }} {{ year }}</strong>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <a href="{{ url_for('index', month=(month - 1 if month > 1 else 12),
+                <a href="{{ url_for('calendar.index', month=(month - 1 if month > 1 else 12),
                     year=(year - 1 if month == 1 else year),
                     calendar=selected_calendars) }}"
                     class="btn btn-light border"><i class="bi bi-arrow-left"></i></a>
-                <a href="{{ url_for('index', month=(month + 1 if month > 1 else 12),
+                <a href="{{ url_for('calendar.index', month=(month + 1 if month > 1 else 12),
                     year=(year - 1 if month == 1 else year),
                     calendar=selected_calendars) }}"
                     class="btn btn-light border"><i class="bi bi-arrow-right"></i></a>
@@ -165,7 +171,7 @@
 <!-- Модалка создания события -->
 <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="/add" class="modal-content">
+    <form method="post" action="{{ url_for('calendar.create_event') }}" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Создать событие</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -185,11 +191,11 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Дата и время начала</label>
-          <input type="datetime-local" class="form-control" name="start_datetime" required>
+          <input type="datetime-local" class="form-control" name="start" required>
         </div>
         <div class="mb-3">
           <label class="form-label">Дата и время окончания</label>
-          <input type="datetime-local" class="form-control" name="end_datetime" required>
+          <input type="datetime-local" class="form-control" name="end" required>
         </div>
         <div class="mb-3">
           <label class="form-label">Местоположение</label>
@@ -240,7 +246,8 @@
 <!-- Модалка редактирования -->
 <div class="modal fade" id="editEventModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
-    <form class="modal-content" method="post" action="/edit" id="editEventForm">
+    <form method="post" action="{{ url_for('calendar.edit_event') }}" id="editEventForm>
+
       <div class="modal-header">
         <h5 class="modal-title">Редактировать событие</h5>
       </div>
@@ -282,7 +289,7 @@
 <!-- Модалка подтверждения удаления -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content" method="post" action="/delete" id="deleteForm">
+    <form method="post" action="{{ url_for('calendar.delete_event') }}"  id="deleteForm" >
       <div class="modal-header">
         <h5 class="modal-title">Удалить событие?</h5>
       </div>
@@ -302,7 +309,7 @@
 <!-- Модалка создания календаря -->
 <div class="modal fade" id="createCalendarModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="/create_calendar" class="modal-content">
+    <form method="post" action="{{ url_for('calendar.create_calendar') }}" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Создать календарь</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -328,8 +335,8 @@
 <!-- Модалка редактирования календаря -->
 <div class="modal fade" id="editCalendarModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="/edit_calendar" class="modal-content">
-      <div id="calendarSelectionHiddenInputs"></div>
+    <form method="post" action="{{ url_for('calendar.edit_calendar') }}" class="modal-content">
+        <div id="calendarSelectionHiddenInputs"></div>
       <div class="modal-header">
         <h5 class="modal-title">Редактировать календарь</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

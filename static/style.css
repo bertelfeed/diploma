@@ -241,3 +241,32 @@ h2, h4, h5 {
     position: relative;
 }
 
+.achievements-panel {
+    background-color: transparent;
+    padding: 0;
+    margin-top: 8px;
+}
+
+.achievements-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.achievements-list li {
+    padding: 4px 0;
+    border-left: 3px solid transparent;
+    font-size: 13px;
+}
+
+.achievements-list li.achieved {
+    border-color: #0d6efd;
+    color: #212529;
+    font-weight: 500;
+}
+
+.achievements-list li.not-achieved {
+    color: #6c757d;
+    font-style: italic;
+}
+

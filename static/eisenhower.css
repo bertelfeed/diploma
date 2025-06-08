@@ -1,0 +1,36 @@
+.eisenhower-container { padding: 20px; }
+.eisenhower-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+.quadrant {
+    background: #2b2b2b;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 250px;
+}
+.task-list { list-style: none; padding-left: 0; }
+.task-item {
+    padding: 8px;
+    border-bottom: 1px dashed #666;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+.task-item.done { opacity: 0.5; text-decoration: line-through; }
+.modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 6px;
+    width: 400px;
+}

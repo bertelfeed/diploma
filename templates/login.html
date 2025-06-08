@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        <form method="post" class="auth-form">
+            <h2>Вход</h2>
+            <input type="text" name="username" placeholder="Логин" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit">Войти</button>
+            <a href="{{ url_for('auth.register') }}">Нет аккаунта? Зарегистрируйтесь</a>
+        </form>
+    </div>
+</body>
+</html>
